@@ -920,3 +920,22 @@ body {
 ::-webkit-scrollbar-thumb:hover {
     background: #95A5A6;
 }
+
+/* Print Styling: Memastikan PDF terlihat rapi dan hanya berisi data penting */
+@media print {
+    #login-screen, #floating-navbar, #operational-form, .btn-clear-history, .btn-print-pdf, .logout-btn, .tabs, .header {
+        display: none !important;
+    }
+    body {
+        background-color: white;
+    }
+    #operational-container {
+        display: block !important;
+        padding: 0 !important;
+    }
+    .history-item {
+        break-inside: avoid;
+        border: 1px solid #eee !important;
+        margin-bottom: 10px;
+    }
+}

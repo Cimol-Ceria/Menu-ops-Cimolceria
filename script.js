@@ -715,6 +715,56 @@ window.clearOpHistory = function() {
     }
 }
 
+function downloadPDF() {
+    // Cek apakah library sudah dimuat
+    if (typeof html2pdf === 'undefined') {
+        showNotification('Sistem sedang menyiapkan library PDF. Tunggu sebentar...', 'error');
+        return;
+    }
+
+    const element = document.getElementById('operational-container');
+    if (!element) return;
+
+    // Format tanggal yang aman untuk nama file (Contoh: 2026-05-17)
+    const now = new Date();
+    const dateStr = now.getFullYear() + '-' + (now.getMonth() + 1).toString().padStart(2, '0') + '-' + now.getDate().toString().padStart(2, '0');
+    
+    // Konfigurasi file PDF
+    const opt = {
+        margin:       [10, 10, 10, 10],
+        filename:     `Laporan_Ops_Cimol_${dateStr}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    // Sembunyikan elemen yang tidak perlu masuk ke PDF (form input dan tombol)
+    const form = document.getElementById('operational-form');
+    const btnDownload = document.querySelector('.btn-print-pdf');
+    const btnClear = document.querySelector('.btn-clear-history');
+    const nav = document.getElementById('floating-navbar');
+
+    if (form) form.style.display = 'none';
+    if (btnDownload) btnDownload.style.display = 'none';
+    if (btnClear) btnClear.style.display = 'none';
+    if (nav) nav.style.display = 'none';
+
+    showNotification('Sedang memproses PDF...', 'info');
+
+    // Proses download
+    html2pdf().set(opt).from(element).save().then(() => {
+        // Tampilkan kembali setelah download selesai
+        if (form) form.style.display = 'block';
+        if (btnDownload) btnDownload.style.display = 'flex';
+        if (btnClear) btnClear.style.display = 'block';
+        if (nav) nav.style.display = 'flex';
+        showNotification('Laporan berhasil diunduh!');
+    }).catch(err => {
+        console.error('PDF Error:', err);
+        showNotification('Gagal mengunduh PDF.', 'error');
+    });
+}
+
 window.addToCart = addToCart;
 window.decreaseQty = decreaseQty;
 window.increaseQty = increaseQty;
@@ -805,19 +855,26 @@ function displayOpHistory() {
 
     if (summary) {
         summary.innerHTML = `
-            <div class="total-sales-summary op-summary-sticky" style="margin-top: 20px;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px;">
+            <div class="total-sales-summary op-summary-sticky" style="margin: 30px auto 100px auto; width: 90%; max-width: 600px; padding: 25px; background: #f1f8f4; border-radius: 15px; border: 2px solid #27AE60; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                <h3 style="text-align: center; margin-bottom: 20px; color: #2C3E50; font-size: 18px;">Rekapitulasi Saldo Ops</h3>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 15px;">
                     <span>Total Pemasukan:</span>
                     <span style="color: #27AE60; font-weight: bold;">Rp ${totalIn.toLocaleString('id-ID')}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 15px;">
                     <span>Total Pengeluaran:</span>
                     <span style="color: #E63946; font-weight: bold;">Rp ${totalOut.toLocaleString('id-ID')}</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; border-top: 1px solid #eee; padding-top: 10px; font-size: 16px; font-weight: bold;">
+                <div style="display: flex; justify-content: space-between; border-top: 2px dashed #27AE60; padding-top: 15px; font-size: 18px; font-weight: bold;">
                     <span>Saldo Netto:</span>
                     <span style="color: #2C3E50;">Rp ${(totalIn - totalOut).toLocaleString('id-ID')}</span>
                 </div>
+                <button onclick="downloadPDF()" class="btn-print-pdf" style="width: 100%; margin-top: 25px; padding: 14px; background: #2C3E50; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: background 0.3s;">
+                    <svg style="width: 20px; fill: white;" viewBox="0 0 24 24">
+                        <path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/>
+                    </svg>
+                    Download Laporan (PDF)
+                </button>
             </div>
         `;
     }
