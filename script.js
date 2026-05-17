@@ -1,6 +1,6 @@
 // --- FIREBASE CONFIGURATION ---
 // PENTING: Kamu WAJIB mengganti data di bawah ini dengan data dari Firebase Console kamu!
-// Jika masih "YOUR_API_KEY", data TIDAK AKAN tersimpan di internet.
+// Jika datanya masih "YOUR_API_KEY", aplikasi tidak akan bisa sinkron antar HP dan Tablet.
 const firebaseConfig = {
     apiKey: "YOUR_API_KEY",
     authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
@@ -11,9 +11,14 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-if (typeof firebase !== 'undefined') {
-    firebase.initializeApp(firebaseConfig);
-    var db = firebase.firestore();
+var db = null;
+try {
+    if (typeof firebase !== 'undefined' && firebaseConfig.apiKey !== "YOUR_API_KEY") {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+    }
+} catch (e) {
+    console.error("Firebase Init Error:", e);
 }
 
 // Global Data Variables
