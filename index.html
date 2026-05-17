@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cimol Enak - Pesan Jajanan</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="login-screen" class="login-screen active">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="logo-section">
+                    <img id="logo-img" src="Logo/Cimol ceria Celemek web.png" alt="Logo Cimol" class="logo-img">
+                </div>
+                <h1>Selamat Datang</h1>
+                <p>Masuk untuk melihat menu dan pesan jajanan</p>
+            </div>
+
+            <div class="slideshow-container">
+                <div class="slides-wrapper">
+                    <div class="slide" style="background: linear-gradient(135deg, #E63946, #FF8C42);">
+                        <div class="slide-content">
+                            <h2>🎉 PROMO SPESIAL</h2>
+                            <p>Cimol Sambal Goang</p>
+                            <button class="slide-badge" onclick="scrollToMenuItem('cimol-1')">BEST SELLER</button>
+                        </div>
+                        <img id="promo-1" src="" alt="Promo 1" class="slide-img">
+                    </div>
+                    <div class="slide" style="background: linear-gradient(135deg, #FF8C42, #FFB563);">
+                        <div class="slide-content">
+                            <h2>🌶️ FAVORIT PELANGGAN</h2>
+                            <p>Cimol Chili Oil</p>
+                            <button class="slide-badge" onclick="scrollToMenuItem('cimol-5')">LIMITED</button>
+                        </div>
+                        <img id="promo-2" src="" alt="Promo 2" class="slide-img">
+                    </div>
+                    <div class="slide" style="background: linear-gradient(135deg, #FFB563, #FFA500);">
+                        <div class="slide-content">
+                            <h2>✨ VARIAN BARU</h2>
+                            <p>Semua Rasa Tersedia</p>
+                            <button class="slide-badge" onclick="scrollToCart()">PESAN SEKARANG</button>
+                        </div>
+                        <img id="promo-3" src="" alt="Promo 3" class="slide-img">
+                    </div>
+                </div>
+                <div class="slide-dots">
+                    <span class="dot active" onclick="currentSlide(0)"></span>
+                    <span class="dot" onclick="currentSlide(1)"></span>
+                    <span class="dot" onclick="currentSlide(2)"></span>
+                </div>
+                <button class="slide-btn prev" onclick="changeSlide(-1)">❮</button>
+                <button class="slide-btn next" onclick="changeSlide(1)">❯</button>
+            </div>
+
+            <form id="login-form" class="login-form">
+                <label for="login-name">Nama Pengguna</label>
+                <input type="text" id="login-name" placeholder="Masukkan nama" required>
+                <label for="login-password">Kata Sandi</label>
+                <input type="password" id="login-password" placeholder="Masukkan kata sandi" required>
+                <button type="submit" class="btn-login">Masuk</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="app-container" class="container hidden">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo-section app-logo-section">
+                <img id="logo-img" src="Logo/Cimol ceria Celemek web.png" alt="Logo Cimol" class="logo-img">
+                <p class="logo-tagline">Kenyalnya enak, pedesnya bikin nagih</p>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="tabs">
+            <button class="tab-btn active" data-tab="menu">Menu</button>
+            <button class="tab-btn" data-tab="cart">Keranjang</button>
+            <button class="tab-btn" data-tab="history">List Pembelian</button>
+            <button class="tab-btn" data-tab="completed">Riwayat Penjualan</button>
+        </nav>
+
+        <!-- Menu Tab -->
+        <section id="menu" class="tab-content active">
+            <div class="menu-grid">
+                <div class="menu-item" id="cimol-1-item">
+                    <div class="item-image">
+                        <img id="cimol-1" src="" alt="Cimol Sambal Goang" class="menu-img">
+                        <span class="badge-best-seller">Best Seller</span>
+                    </div>
+                    <h3>Cimol Sambal Goang</h3>
+                    <p class="price">Rp 10.000</p>
+                    <button class="add-btn" onclick="addToCart('Cimol Sambal Goang', 10000)">+ Tambah</button>
+                </div>
+
+                <div class="menu-item">
+                    <div class="item-image">
+                        <img id="cimol-2" src="" alt="Cimol Sambal Goang Basah" class="menu-img">
+                    </div>
+                    <h3>Cimol Sambal Goang Basah</h3>
+                    <p class="price">Rp 10.000</p>
+                    <button class="add-btn" onclick="addToCart('Cimol Sambal Goang Basah', 10000)">+ Tambah</button>
+                </div>
+
+                <div class="menu-item">
+                    <div class="item-image">
+                        <img id="cimol-3" src="" alt="Cimol Bubuk Pedas" class="menu-img">
+                    </div>
+                    <h3>Cimol Bubuk Pedas</h3>
+                    <p class="price">Rp 10.000</p>
+                    <button class="add-btn" onclick="addToCart('Cimol Bubuk Pedas', 10000)">+ Tambah</button>
+                </div>
+
+                <div class="menu-item">
+                    <div class="item-image">
+                        <img id="cimol-4" src="" alt="Cimol Gurih" class="menu-img">
+                    </div>
+                    <h3>Cimol Gurih</h3>
+                    <p class="price">Rp 10.000</p>
+                    <button class="add-btn" onclick="addToCart('Cimol Gurih', 10000)">+ Tambah</button>
+                </div>
+
+                <div class="menu-item" id="cimol-5-item">
+                    <div class="item-image">
+                        <img id="cimol-5" src="" alt="Cimol Chili Oil" class="menu-img">
+                    </div>
+                    <h3>Cimol Chili Oil</h3>
+                    <p class="price">Rp 10.000</p>
+                    <button class="add-btn" onclick="addToCart('Cimol Chili Oil', 10000)">+ Tambah</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Cart Tab -->
+        <section id="cart" class="tab-content">
+            <div id="cart-items" class="cart-list">
+                <p class="empty-message">Keranjang masih kosong</p>
+            </div>
+
+            <div class="cart-summary">
+                <div class="summary-row">
+                    <span>Total:</span>
+                    <span id="total-price">Rp 0</span>
+                </div>
+            </div>
+
+            <!-- Customer Form -->
+            <form id="checkout-form" class="checkout-form">
+                <h3>Data Pelanggan</h3>
+                
+                <div class="form-group">
+                    <label for="customer-name">Nama Pelanggan</label>
+                    <input type="text" id="customer-name" required placeholder="Masukkan nama">
+                </div>
+
+                <div class="form-group">
+                    <label for="order-date">Hari PO (Hari Pemesanan)</label>
+                    <input type="date" id="order-date" required>
+                </div>
+
+                <button type="submit" class="btn-checkout">✓ Pesan Sekarang</button>
+                <button type="button" class="btn-clear" onclick="clearCart()">🗑️ Bersihkan</button>
+            </form>
+        </section>
+
+        <!-- History Tab -->
+        <section id="history" class="tab-content">
+            <div class="history-header">
+                <h3>List Pembelian</h3>
+                <button class="btn-clear-history" onclick="clearHistory()">🗑️ Hapus Semua</button>
+            </div>
+            <div id="history-list" class="history-list">
+                <p class="empty-message">Tidak ada riwayat penjualan</p>
+            </div>
+        </section>
+
+        <!-- Completed Tab -->
+        <section id="completed" class="tab-content">
+            <div class="history-header">
+                <h3>Riwayat Penjualan</h3>
+                <button class="btn-clear-history" onclick="clearCompletedHistory()">🗑️ Hapus Semua</button>
+            </div>
+            <div id="completed-list" class="history-list">
+                <p class="empty-message">Belum ada pesanan selesai</p>
+            </div>
+        </section>
+    </div>
+
+    <!-- Operational Page -->
+    <section id="operational-container" class="container hidden">
+        <header class="header">
+            <div class="logo-section app-logo-section">
+                <img src="Logo/Cimol ceria Celemek web.png" alt="Logo Cimol" class="logo-img">
+                <h1>Operasional</h1>
+                <p>Pencatatan Belanja & Pemasukan</p>
+            </div>
+        </header>
+
+        <div style="padding: 20px; padding-bottom: 120px;">
+            <form id="operational-form" class="checkout-form" style="background: white; border: 2px solid #eee;">
+                <h3 style="margin-bottom: 15px; color: #2C3E50; border-bottom: 2px solid #FF8C42; display: inline-block;">Tambah Catatan Baru</h3>
+                <div class="form-group">
+                    <label for="op-date">Tanggal Transaksi</label>
+                    <input type="date" id="op-date" required>
+                </div>
+                <div class="form-group">
+                    <label for="op-type">Tipe Transaksi</label>
+                    <select id="op-type" required style="width: 100%; padding: 12px; border: 1px solid #E0E0E0; border-radius: 8px; font-family: inherit;">
+                        <option value="pengeluaran">🔴 Pengeluaran (Belanja)</option>
+                        <option value="pemasukan">🟢 Pemasukan Lain-lain</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="op-desc">Rincian / Belanja Apa Saja?</label>
+                    <textarea id="op-desc" placeholder="Contoh: Beli mika 2 pack, Cabai 1kg, Minyak 2L..." required style="min-height: 100px;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="op-amount">Total Nominal (Rp)</label>
+                    <input type="number" id="op-amount" placeholder="Contoh: 50000" required>
+                </div>
+                <button type="submit" class="btn-checkout" style="background: #2C3E50;">💾 Simpan ke Buku Catatan</button>
+            </form>
+
+            <div class="history-header" style="margin-top: 30px; border-bottom: 2px solid #eee; padding-bottom: 10px;">
+                <h3 style="color: #2C3E50;">📖 Riwayat Buku Kas</h3>
+                <button class="btn-clear-history" onclick="clearOpHistory()">🗑️ Hapus Semua</button>
+            </div>
+            <div id="op-history-list" class="history-list" style="margin-top: 15px;"></div>
+        </div>
+        
+        <!-- Rekap Saldo Sticky -->
+        <div id="op-summary-container"></div>
+    </section>
+
+    <nav id="floating-navbar" class="floating-navbar hidden">
+        <div class="nav-item active" id="nav-menu" onclick="navigateToMenu()">
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+            </span>
+            <span class="nav-label">Menu</span>
+        </div>
+        <div class="nav-item" id="nav-op" onclick="navigateToOperational()">
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></svg>
+            </span>
+            <span class="nav-label">Ops</span>
+        </div>
+        <div class="nav-item" onclick="logoutUser()">
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24"><path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/></svg>
+            </span>
+            <span class="nav-label">Keluar</span>
+        </div>
+    </nav>
+
+    <!-- Meme Overlay for Login Errors -->
+    <div id="meme-overlay" class="meme-overlay hidden">
+        <img id="meme-img" src="https://i.imgflip.com/4t0m5.jpg" alt="Who are you?">
+        <h2 id="meme-text">lau siapa mpruy!!</h2>
+    </div>
+
+   <script type="module" src="script.js"></script>
+</body>
+</html>
