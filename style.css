@@ -20,7 +20,7 @@ body {
 }
 
 .container {
-    max-width: 768px; /* Ukuran standar tablet */
+    width: 100%; /* Mengatur lebar agar memenuhi seluruh layar tablet */
     margin: 0 auto;
     background-color: white;
     min-height: 100vh;
@@ -44,8 +44,7 @@ body {
 
 .login-card {
     width: 100%;
-    max-width: 600px; /* Diperlebar sedikit untuk tablet */
-    max-width: 400px; /* Ukuran diperkecil agar input tidak terlalu panjang */
+    max-width: 550px; /* Ukuran yang lebih pas untuk tablet agar tidak terlihat kekecilan */
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color), var(--accent-color)); /* Gradasi Merah, Oranye, dan Warna Kulit */
     border-radius: 24px;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
@@ -470,7 +469,7 @@ body {
 /* Menu Grid */
 .menu-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3 kolom untuk tablet */
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); /* Mengisi ruang secara otomatis di tablet yang lebih lebar */
     gap: 16px;
     margin-bottom: 20px;
 }
