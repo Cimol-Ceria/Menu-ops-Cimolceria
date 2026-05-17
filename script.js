@@ -1,22 +1,21 @@
-// --- FIREBASE CONFIGURATION ---
+// --- FIREBASE CONFIGURATION & INITIALIZATION ---
+// 1. Import modul Firebase versi modern (Modular) yang dibutuhkan website kamu
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
 const firebaseConfig = {
-  apiKey: "AIzaSyC_2nfW11_spUG11qa4rPO6zJQDbmeFfXA",
-  authDomain: "cimolceria.firebaseapp.com",
-  projectId: "cimolceria",
-  storageBucket: "cimolceria.firebasestorage.app",
-  messagingSenderId: "811452009878",
-  appId: "1:811452009878:web:f10a9ccf7a63353ebea1b7",
-  measurementId: "G-CY1NT38PSP"
+  apiKey: "AIzaSyDx9OS6ZhJx3_4VTvyyhm52o7lFIIOETmY",
+  authDomain: "cimolceria-d1f24.firebaseapp.com",
+  projectId: "cimolceria-d1f24",
+  storageBucket: "cimolceria-d1f24.firebasestorage.app",
+  messagingSenderId: "41841872278",
+  appId: "1:41841872278:web:aee2b572b9aa80a3d861b7",
+  measurementId: "G-8E759S9KC0"
 };
 
-// Initialize Firebase
-let db = null;
-if (typeof firebase !== 'undefined') {
-    firebase.initializeApp(firebaseConfig);
-    db = firebase.firestore();
-} else {
-    console.warn("Firebase belum dikonfigurasi. Data hanya tersimpan lokal.");
-}
+// 2. Inisialisasi Firebase & Firestore Database
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 // Global Data Variables
 let cart = [];
@@ -38,6 +37,8 @@ function showSlide(index) {
     const dots = document.querySelectorAll('.dot');
     const totalSlides = document.querySelectorAll('.slide').length;
     
+    if (!wrapper) return; // Guard clause jika element belum ada
+
     // Wrap around
     if (index >= totalSlides) {
         currentSlideIndex = 0;
@@ -135,7 +136,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Navigation from slideshow
 function scrollToMenuItem(elementId) {
-    // Find the menu item with cimol-X ID
     const targetIds = {
         'cimol-1': 'cimol-1-item',
         'cimol-5': 'cimol-5-item'
@@ -145,10 +145,7 @@ function scrollToMenuItem(elementId) {
     if (targetId) {
         const element = document.getElementById(targetId);
         if (element) {
-            // Scroll to element
             element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
-            // Add highlight effect
             element.classList.add('menu-item-highlight');
             setTimeout(() => {
                 element.classList.remove('menu-item-highlight');
@@ -158,7 +155,6 @@ function scrollToMenuItem(elementId) {
 }
 
 function scrollToCart() {
-    // Click the cart tab
     const cartTab = document.querySelector('[data-tab="cart"]');
     if (cartTab) {
         cartTab.click();
@@ -171,10 +167,8 @@ function handleSwipe() {
     
     if (Math.abs(diff) > swipeThreshold) {
         if (diff > 0) {
-            // Swipe left - next slide
             changeSlide(1);
         } else {
-            // Swipe right - previous slide
             changeSlide(-1);
         }
     }
@@ -182,55 +176,50 @@ function handleSwipe() {
 
 // Login Management
 function loginUser(name) {
+    const docId = name.toLowerCase(); 
     const loginScreen = document.getElementById('login-screen');
     const appContainer = document.getElementById('app-container');
     const opContainer = document.getElementById('operational-container');
     const floatingNav = document.getElementById('floating-navbar');
 
     if (loginScreen && appContainer) {
-        // Ambil data lokal dulu untuk respon cepat
         cart = JSON.parse(localStorage.getItem('cart')) || [];
         opTransactions = JSON.parse(localStorage.getItem('opTransactions')) || [];
         orders = JSON.parse(localStorage.getItem('orders')) || [];
         completedOrders = JSON.parse(localStorage.getItem('completedOrders')) || [];
         
-        currentUser = name;
-        isCloudLoaded = false; // Reset status cloud
+        currentUser = docId;
+        isCloudLoaded = false; 
 
         loginScreen.classList.add('hidden');
         appContainer.classList.remove('hidden');
         if (opContainer) opContainer.classList.add('hidden');
         if (floatingNav) floatingNav.classList.remove('hidden');
 
-        // SINKRONISASI CLOUD (Real-time Sync)
+        // SINKRONISASI CLOUD UPDATE (Real-time Sync Menggunakan SDK Modular)
         if (db) {
             showNotification('Menghubungkan ke Cloud...', 'info');
-            unsubscribe = db.collection('users').doc(name).onSnapshot((doc) => {
-                if (doc.exists) {
-                    const cloudData = doc.data();
-                    // Ambil data dari internet
+            
+            // Menggunakan fungsi doc() dan onSnapshot() versi modular
+            unsubscribe = onSnapshot(doc(db, 'users', docId), (snapshot) => {
+                isCloudLoaded = true; 
+                
+                if (snapshot.exists()) {
+                    const cloudData = snapshot.data();
                     cart = cloudData.cart || [];
                     opTransactions = cloudData.opTransactions || [];
                     orders = cloudData.orders || [];
                     completedOrders = cloudData.completedOrders || [];
                     
-                    saveLocal(); 
-                    renderAllUI(); // Update tampilan tanpa trigger save ulang
-                    saveLocal(); // Simpan ke memori HP sebagai cadangan
-                    isCloudLoaded = true; // Tandai bahwa data internet sudah masuk
-                    renderAllUI(); // Update tampilan HP/Tablet secara LIVE
+                    saveLocal();
                 }
+                renderAllUI(); 
             }, (error) => {
                 console.error("Gagal sinkron cloud:", error);
                 showNotification('Gagal sinkronisasi cloud.', 'error');
             });
         } else {
             alert("Firebase belum dikonfigurasi! Data hanya tersimpan di perangkat ini.");
-            // Jika Firebase tidak diisi, pakai data HP saja
-            cart = JSON.parse(localStorage.getItem('cart')) || [];
-            opTransactions = JSON.parse(localStorage.getItem('opTransactions')) || [];
-            orders = JSON.parse(localStorage.getItem('orders')) || [];
-            completedOrders = JSON.parse(localStorage.getItem('completedOrders')) || [];
             renderAllUI();
             showNotification('Mode Offline: Firebase belum diatur.', 'error');
         }
@@ -251,9 +240,9 @@ function renderAllUI() {
 // Helper untuk simpan data ke Local & Cloud secara bersamaan
 function saveAllData() {
     saveLocal();
-    // PENTING: Jangan simpan ke Cloud kalau data internet belum berhasil ditarik sepenuhnya
+    // Menggunakan setDoc() versi modular untuk mengganti db.collection().doc().set()
     if (db && currentUser && isCloudLoaded) {
-        db.collection('users').doc(currentUser).set({
+        setDoc(doc(db, 'users', currentUser), {
             cart: cart,
             opTransactions: opTransactions,
             orders: orders,
@@ -273,13 +262,9 @@ function showMeme() {
     const overlay = document.getElementById('meme-overlay');
     if (overlay) {
         overlay.classList.remove('hidden');
-        
-        // Sembunyikan kembali otomatis setelah 3 detik
         setTimeout(() => {
             overlay.classList.add('hidden');
         }, 3000);
-        
-        // Menutup jika overlay diklik
         overlay.onclick = () => overlay.classList.add('hidden');
     }
 }
@@ -293,7 +278,6 @@ function logoutUser() {
     const floatingNav = document.getElementById('floating-navbar');
 
     if (loginScreen && appContainer) {
-        // Hentikan sinkronisasi cloud saat logout
         if (unsubscribe) {
             unsubscribe();
             unsubscribe = null;
@@ -308,6 +292,7 @@ function logoutUser() {
         showNotification('Kamu berhasil logout. Data hanya tersimpan di perangkat ini.');
     }
 }
+
 const loginForm = document.getElementById('login-form');
 if (loginForm) {
     loginForm.addEventListener('submit', function(e) {
@@ -337,9 +322,8 @@ function navigateToMenu() {
         appContainer.classList.remove('hidden');
         if (opContainer) opContainer.classList.add('hidden');
         
-        // Tambahkan efek transisi halus
         appContainer.classList.remove('page-fade-in');
-        void appContainer.offsetWidth; // Trigger reflow untuk merestart animasi
+        void appContainer.offsetWidth; 
         appContainer.classList.add('page-fade-in');
 
         showNotification('Kembali ke Menu Utama');
@@ -354,32 +338,28 @@ function navigateToOperational() {
         opContainer.classList.remove('hidden');
         if (appContainer) appContainer.classList.add('hidden');
         
-        // Tambahkan efek transisi halus
         opContainer.classList.remove('page-fade-in');
-        void opContainer.offsetWidth; // Trigger reflow untuk merestart animasi
+        void opContainer.offsetWidth; 
         opContainer.classList.add('page-fade-in');
 
-        displayOpHistory(); // Refresh operational history
+        displayOpHistory(); 
         showNotification('Beralih ke Halaman Operasional');
         updateNavbarActiveState('operational');
     }
 }
 
-// Cart Management
 // Tab Switching
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         const tabName = btn.getAttribute('data-tab');
         
-        // Remove active class from all tabs and contents
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
         
-        // Add active class to clicked tab
         btn.classList.add('active');
-        document.getElementById(tabName).classList.add('active');
+        const targetTab = document.getElementById(tabName);
+        if (targetTab) targetTab.classList.add('active');
 
-        // Refresh lists when tabs are clicked
         if (tabName === 'history') displayHistory();
         if (tabName === 'completed') displayCompletedOrders();
     });
@@ -404,7 +384,6 @@ function addToCart(name, price) {
     showNotification(`✓ ${name} ditambahkan ke keranjang`);
 }
 
-// Update Cart Display
 function updateCart() {
     saveAllData(); 
     renderCartUI();
@@ -416,7 +395,8 @@ function renderCartUI() {
 
     if (cart.length === 0) {
         cartItemsDiv.innerHTML = '<p class="empty-message">Keranjang masih kosong</p>';
-        document.getElementById('total-price').textContent = 'Rp 0';
+        const totalDiv = document.getElementById('total-price');
+        if (totalDiv) totalDiv.textContent = 'Rp 0';
         return;
     }
     
@@ -451,16 +431,15 @@ function renderCartUI() {
     });
     
     cartItemsDiv.innerHTML = html;
-    document.getElementById('total-price').textContent = `Rp ${total.toLocaleString('id-ID')}`;
+    const totalDiv = document.getElementById('total-price');
+    if (totalDiv) totalDiv.textContent = `Rp ${total.toLocaleString('id-ID')}`;
 }
 
-// Increase Quantity
 function increaseQty(index) {
     cart[index].quantity++;
     updateCart();
 }
 
-// Decrease Quantity
 function decreaseQty(index) {
     if (cart[index].quantity > 1) {
         cart[index].quantity--;
@@ -475,13 +454,11 @@ function updateNote(index, note) {
     saveAllData();
 }
 
-// Remove from Cart
 function removeFromCart(index) {
     cart.splice(index, 1);
     updateCart();
 }
 
-// Clear Cart
 function clearCart() {
     if (cart.length === 0) {
         showNotification('Keranjang sudah kosong');
@@ -491,72 +468,72 @@ function clearCart() {
     if (confirm('Yakin ingin menghapus semua item di keranjang?')) {
         cart = [];
         updateCart();
-        document.getElementById('checkout-form').reset();
+        const checkoutForm = document.getElementById('checkout-form');
+        if (checkoutForm) checkoutForm.reset();
         showNotification('Keranjang telah dikosongkan');
     }
 }
 
 // Checkout Form Submission
-document.getElementById('checkout-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    if (cart.length === 0) {
-        showNotification('❌ Keranjang masih kosong!', 'error');
-        return;
-    }
-    
-    // Get form data
-    const customerName = document.getElementById('customer-name').value;
-    const orderDate = document.getElementById('order-date').value;
-    
-    // Calculate total
-    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    
-    // Create order object
-    const order = {
-        id: Date.now(),
-        name: customerName,
-        orderDate: orderDate,
-        items: [...cart],
-        total: total,
-        timestamp: new Date().toISOString()
-    };
-    
-    // Save to localStorage
-    orders.push(order);
-    saveAllData();
-    
-    // Clear cart and form
-    cart = [];
-    updateCart();
-    document.getElementById('checkout-form').reset();
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('order-date').value = today;
-    
-    showNotification('✓ Pesanan berhasil dicatat!');
-    
-    // Switch to history tab
-    setTimeout(() => {
-        document.querySelector('[data-tab="history"]').click();
-        displayHistory();
-    }, 500);
-});
+const checkoutForm = document.getElementById('checkout-form');
+if (checkoutForm) {
+    checkoutForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (cart.length === 0) {
+            showNotification('❌ Keranjang masih kosong!', 'error');
+            return;
+        }
+        
+        const customerName = document.getElementById('customer-name').value;
+        const orderDate = document.getElementById('order-date').value;
+        const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        
+        const order = {
+            id: Date.now(),
+            name: customerName,
+            orderDate: orderDate,
+            items: [...cart],
+            total: total,
+            timestamp: new Date().toISOString()
+        };
+        
+        orders.push(order);
+        saveAllData();
+        
+        cart = [];
+        updateCart();
+        this.reset();
+        const today = new Date().toISOString().split('T')[0];
+        const orderDateInput = document.getElementById('order-date');
+        if (orderDateInput) orderDateInput.value = today;
+        
+        showNotification('✓ Pesanan berhasil dicatat!');
+        
+        setTimeout(() => {
+            const histTab = document.querySelector('[data-tab="history"]');
+            if (histTab) histTab.click();
+            displayHistory();
+        }, 500);
+    });
+}
 
 // Display Purchase History
 function displayHistory() {
     const historyList = document.getElementById('history-list');
+    if (!historyList) return;
+
     if (orders.length === 0) {
         historyList.innerHTML = '<p class="empty-message">Tidak ada riwayat penjualan</p>';
         return;
     }
     
-    // Group orders by day
     const ordersByDay = {};
     
     orders.forEach(order => {
         const orderDate = new Date(order.orderDate);
         const dayName = orderDate.toLocaleDateString('id-ID', { weekday: 'long' });
-        const dateStr = order.orderDate; // Use as key to keep same dates together
+        const dateStr = order.orderDate; 
         const fullDate = `${dayName} (${orderDate.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' })})`;
         
         if (!ordersByDay[dateStr]) {
@@ -569,18 +546,13 @@ function displayHistory() {
         ordersByDay[dateStr].orders.push(order);
     });
     
-    // Sort dates in descending order (newest first)
     const sortedDates = Object.keys(ordersByDay).sort().reverse();
-    
     let html = '';
     
     sortedDates.forEach(dateStr => {
         const dayGroup = ordersByDay[dateStr];
-        
-        // Add day heading
         html += `<div class="history-day-header">${dayGroup.dayName}</div>`;
         
-        // Add orders for this day
         dayGroup.orders.forEach(order => {
             const itemsList = order.items.map(item => `${item.name} (${item.quantity}x)${item.note ? ` - ${item.note}` : ''}`).join(', ');
             
@@ -597,8 +569,8 @@ function displayHistory() {
                         Total: Rp ${order.total.toLocaleString('id-ID')}
                     </div>
                     <div class="history-actions">
-                        <button class="btn-action finish" onclick="finishOrder(${order.id})">Selesai</button>
-                        <button class="btn-action cancel" onclick="cancelOrder(${order.id})">Cancel</button>
+                        <button class="btn-action finish" data-id="${order.id}">Selesai</button>
+                        <button class="btn-action cancel" data-id="${order.id}">Cancel</button>
                     </div>
                 </div>
             `;
@@ -606,11 +578,20 @@ function displayHistory() {
     });
     
     historyList.innerHTML = html;
+
+    // Pasang Event Listener dinamis untuk tombol aksi di history
+    historyList.querySelectorAll('.btn-action.finish').forEach(btn => {
+        btn.onclick = () => finishOrder(parseInt(btn.getAttribute('data-id')));
+    });
+    historyList.querySelectorAll('.btn-action.cancel').forEach(btn => {
+        btn.onclick = () => cancelOrder(parseInt(btn.getAttribute('data-id')));
+    });
 }
 
-// Function to show Completed Orders
 function displayCompletedOrders() {
     const completedList = document.getElementById('completed-list');
+    if (!completedList) return;
+
     if (completedOrders.length === 0) {
         completedList.innerHTML = '<p class="empty-message">Belum ada pesanan selesai</p>';
         return;
@@ -619,14 +600,12 @@ function displayCompletedOrders() {
     let html = '';
     let totalSales = 0;
 
-    // Sort completed orders newest first
     [...completedOrders].reverse().forEach(order => {
         const itemsList = order.items.map(item => `${item.name} (${item.quantity}x)${item.note ? ` - ${item.note}` : ''}`).join(', ');
         const isCanceled = order.status === 'Cancel';
         const statusColor = isCanceled ? '#E63946' : '#27AE60';
         const statusText = isCanceled ? 'CANCELED' : 'SELESAI';
 
-        // Hanya tambahkan ke total jika statusnya Selesai (bukan Cancel)
         if (!isCanceled) {
             totalSales += order.total;
         }
@@ -643,7 +622,6 @@ function displayCompletedOrders() {
         `;
     });
 
-    // Tambahkan box ringkasan total penjualan di bagian bawah
     html += `
         <div class="total-sales-summary" style="position: sticky; bottom: 0; margin-top: 20px; padding: 15px; background: #f1f8f4; border-radius: 8px; border: 2px solid #27AE60; text-align: right; box-shadow: 0 -5px 15px rgba(0,0,0,0.1); z-index: 10;">
             <h3 style="margin: 0; color: #333; font-size: 16px;">Total Penjualan Berhasil:</h3>
@@ -655,18 +633,16 @@ function displayCompletedOrders() {
     completedList.innerHTML = html;
 }
 
-// Action Functions
 function finishOrder(orderId) {
     const orderIndex = orders.findIndex(o => o.id === orderId);
     
     if (orderIndex !== -1) {
         let completedOrder = orders.splice(orderIndex, 1)[0];
         completedOrder.status = 'Selesai';
-        completedOrder.timestamp = new Date().toISOString(); // Update to finish time
+        completedOrder.timestamp = new Date().toISOString(); 
         
         completedOrders.push(completedOrder);
 
-        // Otomatis masukkan ke riwayat buku kas sebagai pemasukan
         const opEntry = {
             id: Date.now() + 1,
             type: 'pemasukan',
@@ -678,7 +654,7 @@ function finishOrder(orderId) {
         
         opTransactions.push(opEntry);
 
-        saveAllData(); // Sinkronkan ke Cloud
+        saveAllData(); 
 
         displayOpHistory();
         displayHistory();
@@ -694,7 +670,7 @@ function cancelOrder(orderId) {
         if (orderIndex !== -1) {
             let canceledOrder = orders.splice(orderIndex, 1)[0];
             canceledOrder.status = 'Cancel';
-            canceledOrder.timestamp = new Date().toISOString(); // Update to cancel time
+            canceledOrder.timestamp = new Date().toISOString(); 
             
             completedOrders.push(canceledOrder);
             saveAllData();
@@ -706,7 +682,8 @@ function cancelOrder(orderId) {
     }
 }
 
-function clearCompletedHistory() {
+// Windows/Global scope exposure agar onclick HTML tetap berfungsi
+window.clearCompletedHistory = function() {
     if (confirm('Hapus semua riwayat pesanan selesai?')) {
         completedOrders = [];
         saveAllData();
@@ -715,8 +692,7 @@ function clearCompletedHistory() {
     }
 }
 
-// Clear History
-function clearHistory() {
+window.clearHistory = function() {
     if (confirm('Yakin ingin menghapus semua riwayat penjualan?')) {
         orders = [];
         saveAllData();
@@ -724,6 +700,29 @@ function clearHistory() {
         showNotification('Riwayat penjualan telah dihapus');
     }
 }
+
+window.clearOpHistory = function() {
+    if (confirm('Hapus semua catatan operasional?')) {
+        opTransactions = [];
+        saveAllData();
+        displayOpHistory();
+        showNotification('Riwayat operasional dibersihkan');
+    }
+}
+
+window.addToCart = addToCart;
+window.decreaseQty = decreaseQty;
+window.increaseQty = increaseQty;
+window.removeFromCart = removeFromCart;
+window.updateNote = updateNote;
+window.clearCart = clearCart;
+window.navigateToMenu = navigateToMenu;
+window.navigateToOperational = navigateToOperational;
+window.logoutUser = logoutUser;
+window.currentSlide = currentSlide;
+window.changeSlide = changeSlide;
+window.scrollToMenuItem = scrollToMenuItem;
+window.scrollToCart = scrollToCart;
 
 // --- OPERATIONAL MANAGEMENT ---
 const opForm = document.getElementById('operational-form');
@@ -748,7 +747,8 @@ if (opForm) {
         saveAllData();
         
         this.reset();
-        document.getElementById('op-date').value = new Date().toISOString().split('T')[0];
+        const opDateInput = document.getElementById('op-date');
+        if (opDateInput) opDateInput.value = new Date().toISOString().split('T')[0];
         displayOpHistory();
         showNotification('Catatan operasional berhasil disimpan');
     });
@@ -761,7 +761,7 @@ function displayOpHistory() {
 
     if (opTransactions.length === 0) {
         list.innerHTML = '<p class="empty-message">Belum ada catatan operasional</p>';
-        summary.innerHTML = '';
+        if (summary) summary.innerHTML = '';
         return;
     }
 
@@ -769,7 +769,6 @@ function displayOpHistory() {
     let totalIn = 0;
     let totalOut = 0;
 
-    // Urutkan berdasarkan tanggal terbaru
     const sortedOps = [...opTransactions].sort((a, b) => new Date(b.date) - new Date(a.date));
 
     sortedOps.forEach(item => {
@@ -799,30 +798,23 @@ function displayOpHistory() {
 
     list.innerHTML = html;
 
-    summary.innerHTML = `
-        <div class="total-sales-summary op-summary-sticky" style="margin-top: 20px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px;">
-                <span>Total Pemasukan:</span>
-                <span style="color: #27AE60; font-weight: bold;">Rp ${totalIn.toLocaleString('id-ID')}</span>
+    if (summary) {
+        summary.innerHTML = `
+            <div class="total-sales-summary op-summary-sticky" style="margin-top: 20px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px;">
+                    <span>Total Pemasukan:</span>
+                    <span style="color: #27AE60; font-weight: bold;">Rp ${totalIn.toLocaleString('id-ID')}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px;">
+                    <span>Total Pengeluaran:</span>
+                    <span style="color: #E63946; font-weight: bold;">Rp ${totalOut.toLocaleString('id-ID')}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-top: 1px solid #eee; padding-top: 10px; font-size: 16px; font-weight: bold;">
+                    <span>Saldo Netto:</span>
+                    <span style="color: #2C3E50;">Rp ${(totalIn - totalOut).toLocaleString('id-ID')}</span>
+                </div>
             </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px;">
-                <span>Total Pengeluaran:</span>
-                <span style="color: #E63946; font-weight: bold;">Rp ${totalOut.toLocaleString('id-ID')}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; border-top: 1px solid #eee; padding-top: 10px; font-size: 16px; font-weight: bold;">
-                <span>Saldo Netto:</span>
-                <span style="color: #2C3E50;">Rp ${(totalIn - totalOut).toLocaleString('id-ID')}</span>
-            </div>
-        </div>
-    `;
-}
-
-function clearOpHistory() {
-    if (confirm('Hapus semua catatan operasional?')) {
-        opTransactions = [];
-        saveAllData();
-        displayOpHistory();
-        showNotification('Riwayat operasional dibersihkan');
+        `;
     }
 }
 
@@ -841,7 +833,6 @@ function updateNavbarActiveState(activePage) {
 
 // Notification Function
 function showNotification(message, type = 'success') {
-    // Create notification element
     const notification = document.createElement('div');
     const bgColor = type === 'error' ? '#E63946' : '#27AE60';
 
@@ -862,7 +853,6 @@ function showNotification(message, type = 'success') {
     
     document.body.appendChild(notification);
     
-    // Remove notification after 3 seconds
     setTimeout(() => {
         notification.style.animation = 'slideOut 0.3s ease';
         setTimeout(() => notification.remove(), 300);
@@ -873,25 +863,12 @@ function showNotification(message, type = 'success') {
 const style = document.createElement('style');
 style.textContent = `
     @keyframes slideIn {
-        from {
-            transform: translateX(400px);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
+        from { transform: translateX(400px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
     }
-    
     @keyframes slideOut {
-        from {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        to {
-            transform: translateX(400px);
-            opacity: 0;
-        }
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(400px); opacity: 0; }
     }
 `;
 document.head.appendChild(style);
