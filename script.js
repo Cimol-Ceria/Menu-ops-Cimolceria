@@ -786,6 +786,19 @@ function clearOpHistory() {
     }
 }
 
+function updateNavbarActiveState(activePage) {
+    const navMenu = document.getElementById('nav-menu');
+    const navOp = document.getElementById('nav-op');
+    
+    if (navMenu && navOp) {
+        navMenu.classList.remove('active');
+        navOp.classList.remove('active');
+        
+        if (activePage === 'menu') navMenu.classList.add('active');
+        if (activePage === 'operational') navOp.classList.add('active');
+    }
+}
+
 // Notification Function
 function showNotification(message, type = 'success') {
     // Create notification element

@@ -417,10 +417,14 @@ body {
     flex-direction: column;
     align-items: center;
     cursor: pointer;
-    color: rgba(255, 255, 255, 0.7); /* Warna teks/ikon saat tidak aktif */
+    color: rgba(255, 255, 255, 0.8);
     font-weight: 600;
     font-size: 12px;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    padding: 8px 20px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 /* Mengatur Icon Emoji */
@@ -445,9 +449,11 @@ body {
 
 /* Efek Interaktif Saat Menu / Ops Berstatus Aktif */
 .floating-navbar .nav-item.active {
-    color: #ffffff; /* Warna putih solid */
-    transform: scale(1.1); /* Efek sedikit membesar agar menonjol */
+    color: #E63946;
+    background-color: #ffffff;
+    transform: scale(1.1) translateY(-5px);
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 /* Menu Grid */
