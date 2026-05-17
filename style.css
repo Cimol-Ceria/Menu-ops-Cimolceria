@@ -24,7 +24,7 @@ body {
     margin: 0 auto;
     background-color: white;
     min-height: 100vh;
-    padding-top: 70px; /* Tambahkan ruang agar konten tidak tertutup navbar di atas */
+    padding-top: 80px; /* Ruang lebih aman agar tidak menutupi logo */
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
 }
 
@@ -395,37 +395,46 @@ body {
 
 /* KUSTOMISASI FLOATING NAVBAR (BENTUK OVAL, GRADASI MERAH-ORANYE, & TETAP MENGAMBANG) */
 .floating-navbar {
-    position: fixed !important;
-    top: 10px; /* Pindahkan ke atas */
+    position: fixed !important; 
+    top: 10px !important; /* Paksa tetap di atas di semua device */
+    bottom: auto !important; /* Pastikan tidak ada bottom yang aktif */
     left: 50%;
     transform: translateX(-50%); /* Posisi pas di tengah layar */
     display: flex;
-    gap: 15px; /* Perkecil jarak antar item */
+    gap: 8px; /* Lebih rapat agar kecil */
     background: linear-gradient(135deg, #E63946, #FF8C42); /* Gradasi Merah ke Oranye */
-    padding: 6px 15px; /* Perkecil padding navbar */
+    padding: 5px 12px; /* Lebih ramping */
     border-radius: 50px; /* Membuat bentuk oval melingkar / kapsul */
-    box-shadow: 0 8px 24px rgba(230, 57, 70, 0.35); /* Efek bayangan mengambang */
+    box-shadow: 0 4px 15px rgba(230, 57, 70, 0.4); 
     z-index: 9999; /* Lapisan paling atas agar tidak tenggelam saat di-scroll */
     border: 1px solid rgba(255, 255, 255, 0.25);
     align-items: center;
     justify-content: center;
-    transition: all 0.3s ease;
+    transition: all 0.3s ease-in-out;
 }
 
 /* Mengatur Item di dalam Floating Navbar */
 .floating-navbar .nav-item {
     display: flex;
-    flex-direction: column;
+    flex-direction: row; /* Icon dan teks sejajar agar lebih tipis */
     align-items: center;
+    gap: 5px;
     cursor: pointer;
     color: rgba(255, 255, 255, 0.8);
     font-weight: 600;
-    font-size: 11px; /* Perkecil ukuran teks */
+    font-size: 10px; /* Ukuran teks lebih kecil */
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    padding: 5px 12px; /* Perkecil padding item */
+    padding: 4px 10px; 
     border-radius: 20px;
     background: rgba(255, 255, 255, 0.15);
     border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Efek Hover untuk HP, Tablet, dan Laptop */
+.floating-navbar .nav-item:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(2px) scale(1.02);
+    color: #ffffff;
 }
 
 /* Mengatur Icon Emoji */
@@ -437,8 +446,8 @@ body {
 }
 
 .floating-navbar .nav-icon svg {
-    width: 18px; /* Perkecil ukuran icon */
-    height: 18px;
+    width: 14px; /* Ukuran icon lebih kecil */
+    height: 14px;
     fill: currentColor; /* Agar warna icon mengikuti warna teks (putih/merah) */
     transition: fill 0.3s ease;
 }
@@ -452,7 +461,7 @@ body {
 .floating-navbar .nav-item.active {
     color: #E63946;
     background-color: #ffffff;
-    transform: scale(1.05) translateY(2px); /* Penyesuaian animasi ke bawah sedikit */
+    transform: scale(1.05) translateY(0);
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
@@ -866,6 +875,12 @@ body {
 
     .container {
         box-shadow: none;
+        padding-top: 75px;
+    }
+
+    .floating-navbar {
+        top: 8px !important; /* Sedikit lebih rapat ke atas di HP */
+        width: auto;
     }
 }
 

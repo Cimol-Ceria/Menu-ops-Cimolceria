@@ -1,24 +1,21 @@
 // --- FIREBASE CONFIGURATION ---
-// PENTING: Kamu WAJIB mengganti data di bawah ini dengan data dari Firebase Console kamu!
-// Jika datanya masih "YOUR_API_KEY", aplikasi tidak akan bisa sinkron antar HP dan Tablet.
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT_ID.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyC_2nfW11_spUG11qa4rPO6zJQDbmeFfXA",
+  authDomain: "cimolceria.firebaseapp.com",
+  projectId: "cimolceria",
+  storageBucket: "cimolceria.firebasestorage.app",
+  messagingSenderId: "811452009878",
+  appId: "1:811452009878:web:f10a9ccf7a63353ebea1b7",
+  measurementId: "G-CY1NT38PSP"
 };
 
 // Initialize Firebase
-var db = null;
-try {
-    if (typeof firebase !== 'undefined' && firebaseConfig.apiKey !== "YOUR_API_KEY") {
-        firebase.initializeApp(firebaseConfig);
-        db = firebase.firestore();
-    }
-} catch (e) {
-    console.error("Firebase Init Error:", e);
+let db = null;
+if (typeof firebase !== 'undefined') {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+} else {
+    console.warn("Firebase belum dikonfigurasi. Data hanya tersimpan lokal.");
 }
 
 // Global Data Variables
@@ -27,6 +24,8 @@ let opTransactions = [];
 let orders = [];
 let completedOrders = [];
 let currentUser = null;
+let isCloudLoaded = false; // Mencegah data kosong menimpa data cloud
+let unsubscribe = null; // Listener sinkronisasi cloud
 
 // Slideshow Management
 let currentSlideIndex = 0;
@@ -182,70 +181,83 @@ function handleSwipe() {
 }
 
 // Login Management
-async function loginUser(name) {
+function loginUser(name) {
     const loginScreen = document.getElementById('login-screen');
     const appContainer = document.getElementById('app-container');
     const opContainer = document.getElementById('operational-container');
     const floatingNav = document.getElementById('floating-navbar');
 
-    if (firebaseConfig.apiKey === "YOUR_API_KEY") {
-        alert("PERINGATAN: Firebase belum dikonfigurasi! Data hanya tersimpan di HP ini saja.");
-    }
-
     if (loginScreen && appContainer) {
-        loginScreen.classList.add('hidden');
-        appContainer.classList.remove('hidden');
-        if (opContainer) opContainer.classList.add('hidden'); // Ensure operational is hidden
-        if (floatingNav) floatingNav.classList.remove('hidden');
-        
-        // 1. Ambil data dari LocalStorage dulu (cadangan)
+        // Ambil data lokal dulu untuk respon cepat
         cart = JSON.parse(localStorage.getItem('cart')) || [];
         opTransactions = JSON.parse(localStorage.getItem('opTransactions')) || [];
         orders = JSON.parse(localStorage.getItem('orders')) || [];
         completedOrders = JSON.parse(localStorage.getItem('completedOrders')) || [];
+        
+        currentUser = name;
+        isCloudLoaded = false; // Reset status cloud
 
-        updateCart();
-        displayHistory();
-        displayCompletedOrders();
-        updateNavbarActiveState('menu');
+        loginScreen.classList.add('hidden');
+        appContainer.classList.remove('hidden');
+        if (opContainer) opContainer.classList.add('hidden');
+        if (floatingNav) floatingNav.classList.remove('hidden');
 
-        // 2. SYNC FROM CLOUD: Ambil data terbaru dari internet untuk menimpa data lokal
+        // SINKRONISASI CLOUD (Real-time Sync)
         if (db) {
             showNotification('Menghubungkan ke Cloud...', 'info');
-            try {
-                const doc = await db.collection('users').doc(name).get();
+            unsubscribe = db.collection('users').doc(name).onSnapshot((doc) => {
                 if (doc.exists) {
                     const cloudData = doc.data();
+                    // Ambil data dari internet
                     cart = cloudData.cart || [];
                     opTransactions = cloudData.opTransactions || [];
-                    orders = cloudData.orders || []; // <-- Data List Pembelian ditarik di sini
+                    orders = cloudData.orders || [];
                     completedOrders = cloudData.completedOrders || [];
                     
                     saveLocal(); 
-                    updateNavbarActiveState('menu');
-                    updateCart();
-                    displayHistory();
-                    displayCompletedOrders();
-                    showNotification('Data berhasil sinkron!', 'success');
-                } else {
-                    showNotification('Akun baru dibuat di Cloud', 'info');
+                    renderAllUI(); // Update tampilan tanpa trigger save ulang
+                    saveLocal(); // Simpan ke memori HP sebagai cadangan
+                    isCloudLoaded = true; // Tandai bahwa data internet sudah masuk
+                    renderAllUI(); // Update tampilan HP/Tablet secara LIVE
                 }
-            } catch (error) {
+            }, (error) => {
                 console.error("Gagal sinkron cloud:", error);
-                showNotification('Gagal mengambil data Cloud', 'error');
-            }
+                showNotification('Gagal sinkronisasi cloud.', 'error');
+            });
+        } else {
+            alert("Firebase belum dikonfigurasi! Data hanya tersimpan di perangkat ini.");
+            // Jika Firebase tidak diisi, pakai data HP saja
+            cart = JSON.parse(localStorage.getItem('cart')) || [];
+            opTransactions = JSON.parse(localStorage.getItem('opTransactions')) || [];
+            orders = JSON.parse(localStorage.getItem('orders')) || [];
+            completedOrders = JSON.parse(localStorage.getItem('completedOrders')) || [];
+            renderAllUI();
+            showNotification('Mode Offline: Firebase belum diatur.', 'error');
         }
         
-        currentUser = name;
+        renderAllUI();
+        updateNavbarActiveState('menu');
+        showNotification(`Halo ${name}!`);
     }
+}
+
+function renderAllUI() {
+    renderCartUI();
+    displayHistory();
+    displayCompletedOrders();
+    displayOpHistory();
 }
 
 // Helper untuk simpan data ke Local & Cloud secara bersamaan
 function saveAllData() {
     saveLocal();
-    if (db && currentUser) {
+    // PENTING: Jangan simpan ke Cloud kalau data internet belum berhasil ditarik sepenuhnya
+    if (db && currentUser && isCloudLoaded) {
         db.collection('users').doc(currentUser).set({
-            cart, opTransactions, orders, completedOrders
+            cart: cart,
+            opTransactions: opTransactions,
+            orders: orders,
+            completedOrders: completedOrders
         }).catch(err => console.error("Cloud Save Error:", err));
     }
 }
@@ -281,6 +293,11 @@ function logoutUser() {
     const floatingNav = document.getElementById('floating-navbar');
 
     if (loginScreen && appContainer) {
+        // Hentikan sinkronisasi cloud saat logout
+        if (unsubscribe) {
+            unsubscribe();
+            unsubscribe = null;
+        }
         currentUser = null;
         appContainer.classList.add('hidden');
         if (opContainer) opContainer.classList.add('hidden');
@@ -288,7 +305,7 @@ function logoutUser() {
         loginScreen.classList.remove('hidden');
         if (loginName) loginName.value = '';
         if (loginPassword) loginPassword.value = '';
-        showNotification('Kamu berhasil logout.');
+        showNotification('Kamu berhasil logout. Data hanya tersimpan di perangkat ini.');
     }
 }
 const loginForm = document.getElementById('login-form');
@@ -389,10 +406,14 @@ function addToCart(name, price) {
 
 // Update Cart Display
 function updateCart() {
-    saveAllData(); // Simpan setiap ada perubahan keranjang
-    
+    saveAllData(); 
+    renderCartUI();
+}
+
+function renderCartUI() {
     const cartItemsDiv = document.getElementById('cart-items');
-    
+    if (!cartItemsDiv) return;
+
     if (cart.length === 0) {
         cartItemsDiv.innerHTML = '<p class="empty-message">Keranjang masih kosong</p>';
         document.getElementById('total-price').textContent = 'Rp 0';
@@ -644,7 +665,7 @@ function finishOrder(orderId) {
         completedOrder.timestamp = new Date().toISOString(); // Update to finish time
         
         completedOrders.push(completedOrder);
-        
+
         // Otomatis masukkan ke riwayat buku kas sebagai pemasukan
         const opEntry = {
             id: Date.now() + 1,
@@ -656,8 +677,8 @@ function finishOrder(orderId) {
         };
         
         opTransactions.push(opEntry);
-        
-        saveAllData(); // Sekarang semua data (pesanan & buku kas) dikirim ke internet sekaligus
+
+        saveAllData(); // Sinkronkan ke Cloud
 
         displayOpHistory();
         displayHistory();
