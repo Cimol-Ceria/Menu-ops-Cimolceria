@@ -1,5 +1,6 @@
 // --- FIREBASE CONFIGURATION ---
-// Ganti konfigurasi di bawah ini dengan data dari Firebase Console Anda!
+// PENTING: Kamu WAJIB mengganti data di bawah ini dengan data dari Firebase Console kamu!
+// Jika masih "YOUR_API_KEY", data TIDAK AKAN tersimpan di internet.
 const firebaseConfig = {
     apiKey: "YOUR_API_KEY",
     authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
@@ -16,10 +17,10 @@ if (typeof firebase !== 'undefined') {
 }
 
 // Global Data Variables
-let cart = JSON.parse(localStorage.getItem('cart')) || [];
-let opTransactions = JSON.parse(localStorage.getItem('opTransactions')) || [];
-let orders = JSON.parse(localStorage.getItem('orders')) || [];
-let completedOrders = JSON.parse(localStorage.getItem('completedOrders')) || [];
+let cart = [];
+let opTransactions = [];
+let orders = [];
+let completedOrders = [];
 let currentUser = null;
 
 // Slideshow Management
@@ -182,21 +183,30 @@ async function loginUser(name) {
     const opContainer = document.getElementById('operational-container');
     const floatingNav = document.getElementById('floating-navbar');
 
+    if (firebaseConfig.apiKey === "YOUR_API_KEY") {
+        alert("PERINGATAN: Firebase belum dikonfigurasi! Data hanya tersimpan di HP ini saja.");
+    }
+
     if (loginScreen && appContainer) {
         loginScreen.classList.add('hidden');
         appContainer.classList.remove('hidden');
         if (opContainer) opContainer.classList.add('hidden'); // Ensure operational is hidden
         if (floatingNav) floatingNav.classList.remove('hidden');
         
-        // Tampilkan data lokal dulu agar cepat
+        // 1. Ambil data dari LocalStorage dulu (cadangan)
+        cart = JSON.parse(localStorage.getItem('cart')) || [];
+        opTransactions = JSON.parse(localStorage.getItem('opTransactions')) || [];
+        orders = JSON.parse(localStorage.getItem('orders')) || [];
+        completedOrders = JSON.parse(localStorage.getItem('completedOrders')) || [];
+
         updateCart();
         displayHistory();
         displayCompletedOrders();
         updateNavbarActiveState('menu');
 
-        // SYNC FROM CLOUD: Ambil data terbaru dari internet saat login
+        // 2. SYNC FROM CLOUD: Ambil data terbaru dari internet untuk menimpa data lokal
         if (db) {
-            showNotification('Sinkronisasi data cloud...', 'info');
+            showNotification('Menghubungkan ke Cloud...', 'info');
             try {
                 const doc = await db.collection('users').doc(name).get();
                 if (doc.exists) {
@@ -205,20 +215,23 @@ async function loginUser(name) {
                     opTransactions = cloudData.opTransactions || [];
                     orders = cloudData.orders || []; // <-- Data List Pembelian ditarik di sini
                     completedOrders = cloudData.completedOrders || [];
-                    saveLocal(); 
                     
-                    // Refresh tampilan setelah data cloud masuk
+                    saveLocal(); 
+                    updateNavbarActiveState('menu');
                     updateCart();
                     displayHistory();
                     displayCompletedOrders();
+                    showNotification('Data berhasil sinkron!', 'success');
+                } else {
+                    showNotification('Akun baru dibuat di Cloud', 'info');
                 }
             } catch (error) {
                 console.error("Gagal sinkron cloud:", error);
+                showNotification('Gagal mengambil data Cloud', 'error');
             }
         }
         
         currentUser = name;
-        showNotification(`Hai ${name}, selamat datang!`);
     }
 }
 
