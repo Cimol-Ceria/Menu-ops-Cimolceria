@@ -176,13 +176,14 @@ function handleSwipe() {
 
 // Login Management
 function loginUser(name) {
-    const docId = name.toLowerCase(); 
+    const docId = name.toLowerCase().trim(); // Memastikan nama bersih dari spasi dan huruf kapital
     const loginScreen = document.getElementById('login-screen');
     const appContainer = document.getElementById('app-container');
     const opContainer = document.getElementById('operational-container');
     const floatingNav = document.getElementById('floating-navbar');
 
     if (loginScreen && appContainer) {
+        // Tarik cadangan lokal sementara sebelum terhubung ke cloud
         cart = JSON.parse(localStorage.getItem('cart')) || [];
         opTransactions = JSON.parse(localStorage.getItem('opTransactions')) || [];
         orders = JSON.parse(localStorage.getItem('orders')) || [];
@@ -200,6 +201,8 @@ function loginUser(name) {
         if (db) {
             showNotification('Menghubungkan ke Cloud...', 'info');
             
+            if (unsubscribe) unsubscribe(); // Lepas listener lama jika ada
+            
             // Menggunakan fungsi doc() dan onSnapshot() versi modular
             unsubscribe = onSnapshot(doc(db, 'users', docId), (snapshot) => {
                 isCloudLoaded = true; 
@@ -211,8 +214,9 @@ function loginUser(name) {
                     orders = cloudData.orders || [];
                     completedOrders = cloudData.completedOrders || [];
                     
-                    saveLocal();
+                    saveLocal(); // Amankan data baru ke memori internal browser
                 }
+                // FIX: Memaksa tablet menggambar ulang UI begitu data real-time masuk
                 renderAllUI(); 
             }, (error) => {
                 console.error("Gagal sinkron cloud:", error);
@@ -305,7 +309,8 @@ if (loginForm) {
             return;
         }
         
-        if (loginName === 'Bunga' && loginPassword === 'admin123') {
+        // FIX: Supaya tidak sensitif huruf besar/kecil saat login nama "Bunga" atau "bunga"
+        if (loginName.toLowerCase() === 'bunga' && loginPassword === 'admin123') {
             loginUser(loginName);
         } else {
             showNotification('lau siapa mpruy', 'error');
