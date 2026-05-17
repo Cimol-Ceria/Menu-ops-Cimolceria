@@ -204,7 +204,7 @@ async function loginUser(name) {
                     const cloudData = doc.data();
                     cart = cloudData.cart || [];
                     opTransactions = cloudData.opTransactions || [];
-                    orders = cloudData.orders || [];
+                    orders = cloudData.orders || []; // <-- Data List Pembelian ditarik di sini
                     completedOrders = cloudData.completedOrders || [];
                     saveLocal(); 
                     

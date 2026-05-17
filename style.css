@@ -24,6 +24,7 @@ body {
     margin: 0 auto;
     background-color: white;
     min-height: 100vh;
+    padding-top: 70px; /* Tambahkan ruang agar konten tidak tertutup navbar di atas */
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
 }
 
@@ -395,13 +396,13 @@ body {
 /* KUSTOMISASI FLOATING NAVBAR (BENTUK OVAL, GRADASI MERAH-ORANYE, & TETAP MENGAMBANG) */
 .floating-navbar {
     position: fixed !important;
-    bottom: 20px; /* Jarak tetap dari bawah layar */
+    top: 10px; /* Pindahkan ke atas */
     left: 50%;
     transform: translateX(-50%); /* Posisi pas di tengah layar */
     display: flex;
-    gap: 25px; /* Jarak antar item disesuaikan agar 3 item muat */
+    gap: 15px; /* Perkecil jarak antar item */
     background: linear-gradient(135deg, #E63946, #FF8C42); /* Gradasi Merah ke Oranye */
-    padding: 10px 25px; /* Padding disesuaikan */
+    padding: 6px 15px; /* Perkecil padding navbar */
     border-radius: 50px; /* Membuat bentuk oval melingkar / kapsul */
     box-shadow: 0 8px 24px rgba(230, 57, 70, 0.35); /* Efek bayangan mengambang */
     z-index: 9999; /* Lapisan paling atas agar tidak tenggelam saat di-scroll */
@@ -419,9 +420,9 @@ body {
     cursor: pointer;
     color: rgba(255, 255, 255, 0.8);
     font-weight: 600;
-    font-size: 12px;
+    font-size: 11px; /* Perkecil ukuran teks */
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    padding: 8px 20px;
+    padding: 5px 12px; /* Perkecil padding item */
     border-radius: 20px;
     background: rgba(255, 255, 255, 0.15);
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -432,12 +433,12 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
 .floating-navbar .nav-icon svg {
-    width: 22px;
-    height: 22px;
+    width: 18px; /* Perkecil ukuran icon */
+    height: 18px;
     fill: currentColor; /* Agar warna icon mengikuti warna teks (putih/merah) */
     transition: fill 0.3s ease;
 }
@@ -451,7 +452,7 @@ body {
 .floating-navbar .nav-item.active {
     color: #E63946;
     background-color: #ffffff;
-    transform: scale(1.1) translateY(-5px);
+    transform: scale(1.05) translateY(2px); /* Penyesuaian animasi ke bawah sedikit */
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
