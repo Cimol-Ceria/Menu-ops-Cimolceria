@@ -183,7 +183,6 @@ async function loginUser(name) {
     const floatingNav = document.getElementById('floating-navbar');
 
     if (loginScreen && appContainer) {
-        currentUser = name;
         loginScreen.classList.add('hidden');
         appContainer.classList.remove('hidden');
         if (opContainer) opContainer.classList.add('hidden'); // Ensure operational is hidden
@@ -217,6 +216,8 @@ async function loginUser(name) {
                 console.error("Gagal sinkron cloud:", error);
             }
         }
+        
+        currentUser = name;
         showNotification(`Hai ${name}, selamat datang!`);
     }
 }
@@ -479,7 +480,7 @@ document.getElementById('checkout-form').addEventListener('submit', function(e) 
         orderDate: orderDate,
         items: [...cart],
         total: total,
-        timestamp: new Date().toLocaleString('id-ID')
+        timestamp: new Date().toISOString()
     };
     
     // Save to localStorage
@@ -622,7 +623,7 @@ function finishOrder(orderId) {
     if (orderIndex !== -1) {
         let completedOrder = orders.splice(orderIndex, 1)[0];
         completedOrder.status = 'Selesai';
-        completedOrder.timestamp = new Date().toLocaleString('id-ID'); // Update to finish time
+        completedOrder.timestamp = new Date().toISOString(); // Update to finish time
         
         completedOrders.push(completedOrder);
         
@@ -654,7 +655,7 @@ function cancelOrder(orderId) {
         if (orderIndex !== -1) {
             let canceledOrder = orders.splice(orderIndex, 1)[0];
             canceledOrder.status = 'Cancel';
-            canceledOrder.timestamp = new Date().toLocaleString('id-ID'); // Update to cancel time
+            canceledOrder.timestamp = new Date().toISOString(); // Update to cancel time
             
             completedOrders.push(canceledOrder);
             saveAllData();
