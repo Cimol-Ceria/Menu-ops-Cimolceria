@@ -1,3 +1,27 @@
+// --- FIREBASE CONFIGURATION ---
+// Ganti konfigurasi di bawah ini dengan data dari Firebase Console Anda!
+const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+};
+
+// Initialize Firebase
+if (typeof firebase !== 'undefined') {
+    firebase.initializeApp(firebaseConfig);
+    var db = firebase.firestore();
+}
+
+// Global Data Variables
+let cart = JSON.parse(localStorage.getItem('cart')) || [];
+let opTransactions = JSON.parse(localStorage.getItem('opTransactions')) || [];
+let orders = JSON.parse(localStorage.getItem('orders')) || [];
+let completedOrders = JSON.parse(localStorage.getItem('completedOrders')) || [];
+let currentUser = null;
+
 // Slideshow Management
 let currentSlideIndex = 0;
 let slideshowInterval;
@@ -152,26 +176,66 @@ function handleSwipe() {
 }
 
 // Login Management
-function loginUser(name) {
+async function loginUser(name) {
     const loginScreen = document.getElementById('login-screen');
     const appContainer = document.getElementById('app-container');
     const opContainer = document.getElementById('operational-container');
     const floatingNav = document.getElementById('floating-navbar');
 
     if (loginScreen && appContainer) {
+        currentUser = name;
         loginScreen.classList.add('hidden');
         appContainer.classList.remove('hidden');
         if (opContainer) opContainer.classList.add('hidden'); // Ensure operational is hidden
         if (floatingNav) floatingNav.classList.remove('hidden');
         
-        // Sinkronisasi tampilan data saat login
+        // Tampilkan data lokal dulu agar cepat
         updateCart();
         displayHistory();
         displayCompletedOrders();
-        
-        showNotification(`Hai ${name}, selamat datang!`);
         updateNavbarActiveState('menu');
+
+        // SYNC FROM CLOUD: Ambil data terbaru dari internet saat login
+        if (db) {
+            showNotification('Sinkronisasi data cloud...', 'info');
+            try {
+                const doc = await db.collection('users').doc(name).get();
+                if (doc.exists) {
+                    const cloudData = doc.data();
+                    cart = cloudData.cart || [];
+                    opTransactions = cloudData.opTransactions || [];
+                    orders = cloudData.orders || [];
+                    completedOrders = cloudData.completedOrders || [];
+                    saveLocal(); 
+                    
+                    // Refresh tampilan setelah data cloud masuk
+                    updateCart();
+                    displayHistory();
+                    displayCompletedOrders();
+                }
+            } catch (error) {
+                console.error("Gagal sinkron cloud:", error);
+            }
+        }
+        showNotification(`Hai ${name}, selamat datang!`);
     }
+}
+
+// Helper untuk simpan data ke Local & Cloud secara bersamaan
+function saveAllData() {
+    saveLocal();
+    if (db && currentUser) {
+        db.collection('users').doc(currentUser).set({
+            cart, opTransactions, orders, completedOrders
+        }).catch(err => console.error("Cloud Save Error:", err));
+    }
+}
+
+function saveLocal() {
+    localStorage.setItem('cart', JSON.stringify(cart));
+    localStorage.setItem('opTransactions', JSON.stringify(opTransactions));
+    localStorage.setItem('orders', JSON.stringify(orders));
+    localStorage.setItem('completedOrders', JSON.stringify(completedOrders));
 }
 
 function showMeme() {
@@ -198,6 +262,7 @@ function logoutUser() {
     const floatingNav = document.getElementById('floating-navbar');
 
     if (loginScreen && appContainer) {
+        currentUser = null;
         appContainer.classList.add('hidden');
         if (opContainer) opContainer.classList.add('hidden');
         if (floatingNav) floatingNav.classList.add('hidden');
@@ -264,22 +329,7 @@ function navigateToOperational() {
     }
 }
 
-function updateNavbarActiveState(activePage) {
-    const navMenu = document.getElementById('nav-menu');
-    const navOp = document.getElementById('nav-op');
-    
-    if (navMenu && navOp) {
-        navMenu.classList.remove('active');
-        navOp.classList.remove('active');
-        
-        if (activePage === 'menu') navMenu.classList.add('active');
-        if (activePage === 'operational') navOp.classList.add('active');
-    }
-}
-
 // Cart Management
-let cart = JSON.parse(localStorage.getItem('cart')) || [];
-
 // Tab Switching
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -320,8 +370,7 @@ function addToCart(name, price) {
 
 // Update Cart Display
 function updateCart() {
-    // Simpan status keranjang ke localStorage agar tetap ada setelah logout/refresh
-    localStorage.setItem('cart', JSON.stringify(cart));
+    saveAllData(); // Simpan setiap ada perubahan keranjang
     
     const cartItemsDiv = document.getElementById('cart-items');
     
@@ -383,7 +432,7 @@ function decreaseQty(index) {
 
 function updateNote(index, note) {
     cart[index].note = note;
-    localStorage.setItem('cart', JSON.stringify(cart));
+    saveAllData();
 }
 
 // Remove from Cart
@@ -434,9 +483,8 @@ document.getElementById('checkout-form').addEventListener('submit', function(e) 
     };
     
     // Save to localStorage
-    let orders = JSON.parse(localStorage.getItem('orders')) || [];
     orders.push(order);
-    localStorage.setItem('orders', JSON.stringify(orders));
+    saveAllData();
     
     // Clear cart and form
     cart = [];
@@ -457,8 +505,6 @@ document.getElementById('checkout-form').addEventListener('submit', function(e) 
 // Display Purchase History
 function displayHistory() {
     const historyList = document.getElementById('history-list');
-    const orders = JSON.parse(localStorage.getItem('orders')) || [];
-    
     if (orders.length === 0) {
         historyList.innerHTML = '<p class="empty-message">Tidak ada riwayat penjualan</p>';
         return;
@@ -525,8 +571,6 @@ function displayHistory() {
 // Function to show Completed Orders
 function displayCompletedOrders() {
     const completedList = document.getElementById('completed-list');
-    const completedOrders = JSON.parse(localStorage.getItem('completedOrders')) || [];
-    
     if (completedOrders.length === 0) {
         completedList.innerHTML = '<p class="empty-message">Belum ada pesanan selesai</p>';
         return;
@@ -573,18 +617,14 @@ function displayCompletedOrders() {
 
 // Action Functions
 function finishOrder(orderId) {
-    let orders = JSON.parse(localStorage.getItem('orders')) || [];
     const orderIndex = orders.findIndex(o => o.id === orderId);
     
     if (orderIndex !== -1) {
         let completedOrder = orders.splice(orderIndex, 1)[0];
         completedOrder.status = 'Selesai';
         completedOrder.timestamp = new Date().toLocaleString('id-ID'); // Update to finish time
-        let completedOrders = JSON.parse(localStorage.getItem('completedOrders')) || [];
         
         completedOrders.push(completedOrder);
-        localStorage.setItem('orders', JSON.stringify(orders));
-        localStorage.setItem('completedOrders', JSON.stringify(completedOrders));
         
         // Otomatis masukkan ke riwayat buku kas sebagai pemasukan
         const opEntry = {
@@ -597,7 +637,8 @@ function finishOrder(orderId) {
         };
         
         opTransactions.push(opEntry);
-        localStorage.setItem('opTransactions', JSON.stringify(opTransactions));
+        
+        saveAllData(); // Sekarang semua data (pesanan & buku kas) dikirim ke internet sekaligus
 
         displayOpHistory();
         displayHistory();
@@ -608,7 +649,6 @@ function finishOrder(orderId) {
 
 function cancelOrder(orderId) {
     if (confirm('Yakin ingin membatalkan pesanan ini?')) {
-        let orders = JSON.parse(localStorage.getItem('orders')) || [];
         const orderIndex = orders.findIndex(o => o.id === orderId);
 
         if (orderIndex !== -1) {
@@ -616,11 +656,8 @@ function cancelOrder(orderId) {
             canceledOrder.status = 'Cancel';
             canceledOrder.timestamp = new Date().toLocaleString('id-ID'); // Update to cancel time
             
-            let completedOrders = JSON.parse(localStorage.getItem('completedOrders')) || [];
             completedOrders.push(canceledOrder);
-            
-            localStorage.setItem('orders', JSON.stringify(orders));
-            localStorage.setItem('completedOrders', JSON.stringify(completedOrders));
+            saveAllData();
             
             displayHistory();
             displayCompletedOrders();
@@ -631,7 +668,8 @@ function cancelOrder(orderId) {
 
 function clearCompletedHistory() {
     if (confirm('Hapus semua riwayat pesanan selesai?')) {
-        localStorage.removeItem('completedOrders');
+        completedOrders = [];
+        saveAllData();
         displayCompletedOrders();
         showNotification('Riwayat selesai dibersihkan');
     }
@@ -640,15 +678,14 @@ function clearCompletedHistory() {
 // Clear History
 function clearHistory() {
     if (confirm('Yakin ingin menghapus semua riwayat penjualan?')) {
-        localStorage.removeItem('orders');
+        orders = [];
+        saveAllData();
         displayHistory();
         showNotification('Riwayat penjualan telah dihapus');
     }
 }
 
 // --- OPERATIONAL MANAGEMENT ---
-let opTransactions = JSON.parse(localStorage.getItem('opTransactions')) || [];
-
 const opForm = document.getElementById('operational-form');
 if (opForm) {
     opForm.addEventListener('submit', function(e) {
@@ -668,7 +705,7 @@ if (opForm) {
         };
         
         opTransactions.push(newEntry);
-        localStorage.setItem('opTransactions', JSON.stringify(opTransactions));
+        saveAllData();
         
         this.reset();
         document.getElementById('op-date').value = new Date().toISOString().split('T')[0];
@@ -743,7 +780,7 @@ function displayOpHistory() {
 function clearOpHistory() {
     if (confirm('Hapus semua catatan operasional?')) {
         opTransactions = [];
-        localStorage.removeItem('opTransactions');
+        saveAllData();
         displayOpHistory();
         showNotification('Riwayat operasional dibersihkan');
     }
