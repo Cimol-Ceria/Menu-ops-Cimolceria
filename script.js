@@ -715,14 +715,18 @@ window.clearOpHistory = function() {
     }
 }
 
+// Pastikan fungsi ini terdaftar secara global segera agar bisa dipanggil onclick
 function downloadPDF() {
-    // Cek apakah library sudah dimuat
     if (typeof html2pdf === 'undefined') {
-        showNotification('Sistem sedang menyiapkan library PDF. Tunggu sebentar...', 'error');
+        showNotification('Library PDF belum siap. Pastikan kamu terhubung internet.', 'error');
         return;
     }
 
-    const element = document.getElementById('operational-container');
+    // Kita ambil area konten saja, bukan containernya agar lebih stabil
+    const element = document.querySelector('#operational-container');
+    const historyList = document.getElementById('op-history-list');
+    const summaryBox = document.querySelector('.total-sales-summary');
+
     if (!element) return;
 
     // Format tanggal yang aman untuk nama file (Contoh: 2026-05-17)
@@ -733,37 +737,61 @@ function downloadPDF() {
     const opt = {
         margin:       [10, 10, 10, 10],
         filename:     `Laporan_Ops_Cimol_${dateStr}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true },
+        image:        { type: 'jpeg', quality: 1 },
+        html2canvas:  { 
+            scale: 2, 
+            useCORS: true,
+            logging: false,
+            scrollY: 0
+        },
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    // Sembunyikan elemen yang tidak perlu masuk ke PDF (form input dan tombol)
+    // Sembunyikan elemen UI yang mengganggu capture
     const form = document.getElementById('operational-form');
     const btnDownload = document.querySelector('.btn-print-pdf');
     const btnClear = document.querySelector('.btn-clear-history');
     const nav = document.getElementById('floating-navbar');
+    const stickySummary = document.querySelector('.op-summary-sticky');
+    
+    let originalHistoryListMaxHeight = '';
+    let originalHistoryListOverflowY = '';
 
-    if (form) form.style.display = 'none';
-    if (btnDownload) btnDownload.style.display = 'none';
-    if (btnClear) btnClear.style.display = 'none';
-    if (nav) nav.style.display = 'none';
+    // Matikan posisi sticky sementara karena html2pdf sering error dengan elemen sticky
+    if (stickySummary) stickySummary.style.position = 'static';
+    [form, btnDownload, btnClear, nav].forEach(el => { if(el) el.style.setProperty('display', 'none', 'important'); });
 
     showNotification('Sedang memproses PDF...', 'info');
 
-    // Proses download
-    html2pdf().set(opt).from(element).save().then(() => {
-        // Tampilkan kembali setelah download selesai
-        if (form) form.style.display = 'block';
-        if (btnDownload) btnDownload.style.display = 'flex';
-        if (btnClear) btnClear.style.display = 'block';
-        if (nav) nav.style.display = 'flex';
-        showNotification('Laporan berhasil diunduh!');
-    }).catch(err => {
-        console.error('PDF Error:', err);
-        showNotification('Gagal mengunduh PDF.', 'error');
-    });
+    // Temporarily remove max-height and overflow-y from historyList to capture all content
+    if (historyList) {
+        originalHistoryListMaxHeight = historyList.style.maxHeight;
+        originalHistoryListOverflowY = historyList.style.overflowY;
+        historyList.style.maxHeight = 'none';
+        historyList.style.overflowY = 'visible';
+    }
+    // Jalankan dengan sedikit delay agar browser sempat merender ulang setelah elemen disembunyikan
+    setTimeout(() => {
+        html2pdf().set(opt).from(element).save()
+            .then(() => {
+                showNotification('Laporan berhasil diunduh!');
+            })
+            .catch(err => {
+                console.error('PDF Error:', err);
+                showNotification('Gagal membuat PDF.', 'error');
+            })
+            .finally(() => {
+                // Kembalikan tampilan semula
+                if (stickySummary) stickySummary.style.position = '';
+                [form, btnDownload, btnClear, nav].forEach(el => { if(el) el.style.display = ''; });
+                if (historyList) {
+                    historyList.style.maxHeight = originalHistoryListMaxHeight;
+                    historyList.style.overflowY = originalHistoryListOverflowY;
+                }
+            });
+    }, 500);
 }
+window.downloadPDF = downloadPDF;
 
 window.addToCart = addToCart;
 window.decreaseQty = decreaseQty;

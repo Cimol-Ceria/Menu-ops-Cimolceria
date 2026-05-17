@@ -513,7 +513,8 @@ body {
     margin-bottom: 12px;
     position: relative;
     width: 100%;
-    height: 120px;
+    height: auto; /* Hapus tinggi tetap */
+    aspect-ratio: 1 / 1; /* Buat rasio aspek 1:1 (persegi) */
     display: flex;
     align-items: center;
     justify-content: center;
