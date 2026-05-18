@@ -575,6 +575,7 @@ function displayHistory() {
                     </div>
                     <div class="history-actions">
                         <button class="btn-action finish" data-id="${order.id}">Selesai</button>
+                        <button class="btn-action edit" data-id="${order.id}">Edit</button>
                         <button class="btn-action cancel" data-id="${order.id}">Cancel</button>
                     </div>
                 </div>
@@ -590,6 +591,9 @@ function displayHistory() {
     });
     historyList.querySelectorAll('.btn-action.cancel').forEach(btn => {
         btn.onclick = () => cancelOrder(parseInt(btn.getAttribute('data-id')));
+    });
+    historyList.querySelectorAll('.btn-action.edit').forEach(btn => {
+        btn.onclick = () => editOrder(parseInt(btn.getAttribute('data-id')));
     });
 }
 
@@ -668,21 +672,42 @@ function finishOrder(orderId) {
     }
 }
 
+function editOrder(orderId) {
+    const orderIndex = orders.findIndex(o => o.id === orderId);
+    if (orderIndex !== -1) {
+        if (cart.length > 0 && !confirm('Keranjang kamu saat ini akan dikosongkan untuk mengedit pesanan ini. Lanjut?')) {
+            return;
+        }
+
+        const orderToEdit = orders.splice(orderIndex, 1)[0];
+        cart = [...orderToEdit.items];
+
+        // Kembalikan nama dan tanggal ke form agar tidak perlu isi ulang
+        const nameInput = document.getElementById('customer-name');
+        const dateInput = document.getElementById('order-date');
+        if (nameInput) nameInput.value = orderToEdit.name;
+        if (dateInput) dateInput.value = orderToEdit.orderDate;
+        
+        saveAllData();
+        renderAllUI();
+        
+        // Pindah ke tab keranjang
+        const cartTab = document.querySelector('[data-tab="cart"]');
+        if (cartTab) cartTab.click();
+
+        showNotification('Pesanan dikembalikan ke keranjang untuk diedit', 'info');
+    }
+}
+
 function cancelOrder(orderId) {
     if (confirm('Yakin ingin membatalkan pesanan ini?')) {
         const orderIndex = orders.findIndex(o => o.id === orderId);
 
         if (orderIndex !== -1) {
-            let canceledOrder = orders.splice(orderIndex, 1)[0];
-            canceledOrder.status = 'Cancel';
-            canceledOrder.timestamp = new Date().toISOString(); 
-            
-            completedOrders.push(canceledOrder);
+            orders.splice(orderIndex, 1);
             saveAllData();
-            
             displayHistory();
-            displayCompletedOrders();
-            showNotification('Pesanan dipindahkan ke Riwayat (Cancel)', 'error');
+            showNotification('Pesanan berhasil dihapus', 'error');
         }
     }
 }
@@ -797,6 +822,7 @@ window.addToCart = addToCart;
 window.decreaseQty = decreaseQty;
 window.increaseQty = increaseQty;
 window.removeFromCart = removeFromCart;
+window.editOrder = editOrder;
 window.updateNote = updateNote;
 window.clearCart = clearCart;
 window.navigateToMenu = navigateToMenu;

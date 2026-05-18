@@ -25,6 +25,7 @@ body {
     background-color: white;
     min-height: 100vh;
     padding-top: 80px; /* Ruang lebih aman agar tidak menutupi logo */
+    padding-top: 0; /* Menghilangkan ruang putih di atas agar header mentok ke atas */
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
 }
 
@@ -850,6 +851,7 @@ body {
 }
 
 .btn-action.finish { background-color: #27AE60; }
+.btn-action.edit { background-color: #FF8C42; }
 .btn-action.cancel { background-color: #E63946; }
 
 /* Empty Message */
@@ -896,6 +898,7 @@ body {
     .container {
         box-shadow: none;
         padding-top: 75px;
+        padding-top: 0;
     }
 
     .floating-navbar {
