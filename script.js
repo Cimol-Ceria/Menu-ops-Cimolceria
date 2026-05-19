@@ -623,7 +623,10 @@ function displayCompletedOrders() {
             <div class="history-item" style="border-left-color: ${statusColor}">
                 <div class="history-item-header">
                     <span class="history-item-name">${order.name} <small style="color: ${statusColor}; margin-left: 8px;">[${statusText}]</small></span>
-                    <span class="history-item-time">${isCanceled ? 'Batal' : 'Selesai'}: ${order.timestamp}</span>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span class="history-item-time">${isCanceled ? 'Batal' : 'Selesai'}: ${order.timestamp}</span>
+                        <button class="remove-btn" onclick="deleteCompletedOrder(${order.id})" title="Hapus riwayat" style="font-size: 22px; line-height: 1; padding: 0;">&times;</button>
+                    </div>
                 </div>
                 <div class="history-item-products">${itemsList}</div>
                 <div class="history-item-total">Total: Rp ${order.total.toLocaleString('id-ID')}</div>
@@ -708,6 +711,18 @@ function cancelOrder(orderId) {
             saveAllData();
             displayHistory();
             showNotification('Pesanan berhasil dihapus', 'error');
+        }
+    }
+}
+
+function deleteCompletedOrder(orderId) {
+    if (confirm('Yakin ingin menghapus riwayat pesanan ini dari daftar selesai?')) {
+        const index = completedOrders.findIndex(o => o.id === orderId);
+        if (index !== -1) {
+            completedOrders.splice(index, 1);
+            saveAllData();
+            displayCompletedOrders();
+            showNotification('Riwayat pesanan berhasil dihapus', 'error');
         }
     }
 }
@@ -823,6 +838,7 @@ window.decreaseQty = decreaseQty;
 window.increaseQty = increaseQty;
 window.removeFromCart = removeFromCart;
 window.editOrder = editOrder;
+window.deleteCompletedOrder = deleteCompletedOrder;
 window.updateNote = updateNote;
 window.clearCart = clearCart;
 window.navigateToMenu = navigateToMenu;
